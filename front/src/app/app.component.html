@@ -1,0 +1,57 @@
+<div class="container">
+  <div class="row text-center mt-5">
+    <div class="col">
+      <h2>CRUD Productos</h2>
+    </div>
+  </div>
+  <div class="row mt-5">
+    <div class="col">
+      <table id="dtProducto" class="table table-striped" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Seleccionar</th>
+            <th>Id</th>
+            <th>Nombre</th>
+            <th>Cantidad</th>
+            <th>Descripcion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of datatable">
+            <td><input type="button" value="Seleccionar" (click)="onSetData(item)"></td>
+            <td>{{ item.id_producto}}</td>
+            <td>{{ item.nombre}}</td>
+            <td>{{ item.cantidad}}</td>
+            <td>{{ item.descripcion}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="row text-center mt-5">
+    <div class="col">
+      <button class="btn btn-success m-2" type="button" (click)="onAddProducto(producto)">Agregar</button>
+      <button class="btn btn-warning m-2" type="button" (click)="onUpdateProducto(producto)">Modificar</button>
+      <button class="btn btn-danger m-2" type="button" (click)="onDeleteProducto(producto.id)">Eliminar</button>
+      <button class="btn btn-primary m-2" type="button" (click)="clear()">Limpiar</button>
+    </div>
+  </div>
+  <div class="row mt-5">
+    <div class="col-md-2">
+      <label for="txtId" class="from-label">ID</label>
+      <input type="text" name="id" id="txtId" class="form-control" [(ngModel)]="producto.id" disabled="true">
+    </div>
+    <div class="col-md-4">
+      <label for="txtNombre" class="from-label">Nombre</label>
+      <input type="text" name="id" id="txtNombre" class="form-control" [(ngModel)]="producto.nombre">
+    </div>
+    <div class="col-md-2">
+      <label for="txtCantidad" class="from-label">Cantidad</label>
+      <input type="text" name="id" id="txtCantidad" class="form-control" [(ngModel)]="producto.cantidad">
+    </div>
+    <div class="col-md-4">
+      <label for="txtDesc" class="from-label">Descripcion</label>
+      <input type="text" name="id" id="txtDesc" class="form-control" [(ngModel)]="producto.descripcion">
+    </div>
+  </div>
+</div>
