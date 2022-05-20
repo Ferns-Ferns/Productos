@@ -153,7 +153,6 @@ namespace back_producto.Models
                 }
                 return res;
             }
-
         }
     }
 }

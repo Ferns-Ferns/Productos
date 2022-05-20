@@ -31,4 +31,4 @@ namespace back_producto.Models
             descripcion = desc;
         }
     }
-}
+}   

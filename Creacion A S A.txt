@@ -24,7 +24,7 @@ VALUES (@nombre, @cantidad, @desc)
 	cantidad=@cantidad,
 	descripcion=@desc
 	WHERE id_producto = @id
-CREATE PROC Producto_Update
+CREATE PROC Producto_Delete
 @id int,
 AS
 DELETE FROM Producto
@@ -45,27 +45,39 @@ Creamos un constructor para cada funcion en el gestor de la BD (int id, string N
 
 Creamos la clase de GestorProducto 
 primero se crea cada uno de los procedimientos para gestionar la bd 
-public List<Producto> getProducto(){
-	List<Producto> lista = new List<Producto>();
-	*Se hace la coneccion con la BD con la variable con Web.config*
-	Importar Configuration (CRTL .)
-	Se crea un SqlCommand
-		SqlCommand cmd = conn.CreateCommand();
-		cmd.CommandText = "Producto_All";
-		cmd.CommandType = CommandType.StoreProcedure; (importar System.Data)
-	Se hace el SqlDataReader
-		SqlDataReader dr = cmd.ExecuteReader();
-	Se crea un while, para leer el datareader
-	while(dr.Read()){
-		int id = dr.GetInt32(0);  (Fijarse bien en la posicion que esta en el StoreProcedure)
-		...
-		Producto producto = new Producto(id, nombre, cantidad, desc);  (Se usa el constructore que recibe todos los datos)
-		lista.Add(producto);
-	}
-	dr.Close();
-	conn.close();   (Cerrar el datareader y la coneccion
-}
-return lista
+
+public List<Producto> getProducto()
+        {
+            List<Producto> lista = new List<Producto>();
+            string strConn = ConfigurationManager.ConnectionStrings["BDLocal"].ToString();
+
+            using (SqlConnection conn = new SqlConnection(strConn))
+            {
+                conn.Open();
+
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "Producto_All";
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                SqlDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    int id = dr.GetInt32(0);
+                    string nombre = dr.GetString(1).Trim();
+                    int cantidad = dr.GetInt32(2);
+                    string desc = dr.GetString(3).Trim();
+
+                    Producto producto = new Producto(id, nombre, cantidad, desc);
+
+                    lista.Add(producto);
+
+                }
+                dr.Close();
+                conn.Close();
+            }
+            return lista;
+        }
 
 *Se crea un metodo para cada procedimiento almacenado*
 addProducto
@@ -140,7 +152,8 @@ GlobalConfiguration.Configuration.Formatters.JsonFormatter.MediaTypeMappings
 
 Se insalla el paquete aspnet.webapi.cors
 en el controller se agrega:
-
+namespace
+{
 	[EnableCors(origins:"*" ,headers:"*" , methods:"GET, POST, PUT, DELETE, OPTIONS")]   //Importar Http.Cors
 
 en webapiconfig
@@ -216,8 +229,12 @@ Se crea una variable ne base al modelo
 	producto:Producto = new Producto();
 	datatable:any = [];
 
+Se crea el constructor con su variable tipo los servicios
+constructor(private productoService:ProductoService){
+  }
+
 ngOnInit():vooid{				//Es lo que inicia desde que abre la pagian web
-	onDataTable();
+	this.onDataTable();
 }
 
 onDataTable(){
