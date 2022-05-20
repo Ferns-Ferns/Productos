@@ -1,0 +1,94 @@
+Creacion de una Api Rest C# y MySQL  (log in)
+
+-Se crea la carpeta para las clases (DTO)
+-Se crea la clase para la tabla que se va a utilizar
+-prop tab tab (se genea el string para cada atributo de la clase)
+-se le aplica formato a los datos tipo [Key]  (Se aplica los data notations)
+
+-Se crea nueva carpeta donde se ubicara la BD (Context)
+-se crea una nueva clase (Nombre X (NeptunoBD)) para heredar a la clase DbContext (que es un EntityFramework)
+-Se genera un constructor (ctor tab tab) el cual se le coloca como parametro DbContextOptions
+-DbContextOptions tiene como parametro <el nombre de la clase para la BD>
+-Se le asigna un nombre (por defecto se asigna (dbContextOptions)
+- se le coloca como :base (el nombre mencionado anteriormente)
+-DbSet y como parametro se le envia la clase <Creada para referenciar a la tabla de la BD)
+-Y se le conoloca un nombre a DbSet
+-Se le agrega sus geters y seters publicos
+
+-Se crea una nueva carpeta para los servicios (Services)
+-Se construye primero la interfaz (IServicesClienteSQL)
+-Se hace la interfaz publica
+-Se crea un metodo Clientes Recuperar(Clientes dto)
+-Recuperar es el nombre del metodo
+-Clientes es el nombre de la clase de la tabla
+
+-Se crea una nueva clase dentro de Services que tendra el mismo nombre que la interfaz sin la I (ServicesClienteSQL)
+-hacemos que herede de la interfaz anterior creada
+-Se implementa la interfaz con CTRL .
+-Se genera el constructor de la clase ServicesClienteSQL
+-En el contructor se pasa como parametro la clase NeptunoBD que es la Base de datos
+-y se le coloca a la par el mismo nombre en minuscula de la clase (NeptunoBD neptunoBD)
+-CRTL .  usar AppSesion.Context
+-Arriba del constructor se declara NULL la variable del constructor (NeptunoBD _NeptunoBD = null)
+-luego en el constructor se hace la inyeccion de dependencia con this._Neptuno = neptunoBD;
+-Se recupera la informacion del cliente que se envia por parametros +
++return this._Neptuno.Clientes.First(a=>a.idCLiente == dto.idCliente && a.Clave == dto.Clave)
+
+-Se genera un nuevo controlador API (ClientesController)
+-En la ruta se agrega el metodo action  ("api/[controller]/[action]")
+-Se crea el constructor la inyeccion de dependencia pero de la Interfaz a utilizar  IServicesClienteSQL +
++ se declara como null la variable del constructor (IServicesClienteSQL _IServicesClienteSQL = null)
++public ClientesController(IServicesClienteSQL servicesClienteSQL) +
++this._IServicesClienteSQL = servicesClienteSQL
+-Se hace una peticion [HttpPost]
+-Se crea un metodo publico con su accion (public IActionResult Recuperar([FromBody] Clientes dto){} +
++Se usa el metodo creado de Recuperar y se le envia fromBody de la clase clientes por el formato JSON y se referencia a la clase dto
+-se hace la validacion if(string.IsNullOrEmpty(dto.idCliente) || string.IsNullOrEmpty(dto.Clave))
+-se retorna el error si no hacen match  return BadRequest("Se ha generado un error al iniciar sesion")
+-De caso contrario un ok y se implementa el metodo que se ha generado en la clase ServicesClienteSQL +
++ retunr Ok(this._IServicesClienteSQL.Recuperar(dto));  se envia como parametro el objeto clientes(dto)
+
+-Se va a generar la cadena de conexion
+-Herramientas - conectar con BD 
+-Se coloca el nombre del servidor de manera local
+-se escoje la BD
+-Aceptar
+-propiedades
+-se copia la cadena de conexion
+-Vamos a appSettings.json
+-Se coloca esto despues de AllowedHosts +
++"ConnectionStrings": {
+    "GetConex": "Data Source=LAPTOP-COTUAHJE\\SQLEXPRESS;Initial Catalog=neptuno;Integrated Security=True"
+  }
++el GetConex es el nombre de la conexion 
+
+-Vamos a crear la conexion con la BD creando un servicio en el archivo Program.cs
+-Vamos a inyectar la carpeta services
+-builder.services.AddTransient<IServicesClienteSQL, ServicesClienteSQL>(); +
++Se inyector primero la interfaz y luego su clase
+-Luego se llama a la cadena de conexion con la BD
+-builder.services.AddContext<NeptunoBD>(
+		options =>
+		{
+			options.UseSqlServer(builder.Configuration.GetConnectionString("GetConex"));
+		}
+		):
+
+-Luego se hace la prueba con los dos datos que va a recibir en este caso 
+-el idCLiente y la Clave 
+-iniciamos el proyecto
+-se utiliza postman para poder enviar un post tipo JSON a la url que nos dan
+-https://localhost:4040/api/Clientes/Recuperar  
+-Se coloca el nombre de la clase (Clientes) y luego el nombre de la accion (Recuperar)
+-se hace el json
+	{
+		"idCliente":"ALKI",
+		"Clave":"**//**//**"
+	}
+
+
+
+
+
+
+

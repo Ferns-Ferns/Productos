@@ -1,0 +1,313 @@
+Crear la base de datos *****
+crear tabla 'Producto', agregar primary key, autoincrementable, quitar lo de los NULLs
+Crear procedimiento almacenados
+	CREATE PROC Producto_All
+	AS
+	SELECT id_producto, nombre, cantidad, descripcion FROM Producto
+	ORDER BY id_producto ASC
+CREATE PROC Producto_Add
+@nombre varchar(50)
+@cantidad int,
+@desc varchar(MAX)
+AS
+INSERT INTO Producto (nombre, cantidad, descripcion)
+VALUES (@nombre, @cantidad, @desc)
+	CREATE PROC Producto_Update
+	@id int,
+	@nombre varchar(50)
+	@cantidad int,
+	@desc varchar(MAX)
+	AS
+	UPDATE Producto
+	SET 
+	nombre=@nombre,
+	cantidad=@cantidad,
+	descripcion=@desc
+	WHERE id_producto = @id
+CREATE PROC Producto_Delete
+@id int,
+AS
+DELETE FROM Producto
+WHERE id_producto = @id
+
+***********************************************************************************************************************************************************************************************************
+Crear backend con asp.net web application (.net framework)
+api web
+Crear cadena de conexion con BD
+</runtime>
+	<connectionStrings>
+		<add name="BDLocal" connectionString="Database=DB_PRODUCTOS;Server=LAPTOP-COTUAHJE\SQLEXPRESS;User=sa;Password=1234;Integrated Security=;" providerName="System.Data.SqlClient" />
+	</connectionStrings>
+Creamos la clase para la tabla Producto con sus propiedades (prop		) idProducto ... descripcion
+Creamos un constructor para cada funcion en el gestor de la BD (int id, string Nombre, int Cantidad, string desc)
+*no se puede colocar exactamente el mismo nombre de las propiedades de la clase que al constructor*
+*no pueden haber 2 constructores iguales, con los mismos atributos*
+
+Creamos la clase de GestorProducto 
+primero se crea cada uno de los procedimientos para gestionar la bd 
+
+public List<Producto> getProducto()
+        {
+            List<Producto> lista = new List<Producto>();
+            string strConn = ConfigurationManager.ConnectionStrings["BDLocal"].ToString();
+
+            using (SqlConnection conn = new SqlConnection(strConn))
+            {
+                conn.Open();
+
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "Producto_All";
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                SqlDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    int id = dr.GetInt32(0);
+                    string nombre = dr.GetString(1).Trim();
+                    int cantidad = dr.GetInt32(2);
+                    string desc = dr.GetString(3).Trim();
+
+                    Producto producto = new Producto(id, nombre, cantidad, desc);
+
+                    lista.Add(producto);
+
+                }
+                dr.Close();
+                conn.Close();
+            }
+            return lista;
+        }
+
+*Se crea un metodo para cada procedimiento almacenado*
+addProducto
+public bool addProducto(Producto producto)
+        {
+            bool res = false;
+            string strConn = ConfigurationManager.ConnectionStrings["BDLocal"].ToString();
+
+            using (SqlConnection conn = new SqlConnection(strConn))
+            {
+                SqlCommand cmd = conn.CreateCommand();
+                SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                cmd.CommandText = "Producto_Add";
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@nombre", producto.nombre);   ("@Lavariable que esta en SQL", la propiedad de la variable utilizada producto.nombre)
+                cmd.Parameters.AddWithValue("@cantidad", producto.cantidad);
+                cmd.Parameters.AddWithValue("@desc", producto.descripcion);
+
+                try
+                {
+                    conn.Open(); 	 			//Se abre la coneccion
+                    cmd.ExecuteNonQuery();	
+                    res = true; 				//responde true
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    res = false;
+                    throw;
+                }
+                finally						//Si la respuesta fue verdad 
+                {
+                    cmd.Parameters.Clear();		//se limpia los parametros
+                    conn.Close();
+                }
+                return res;
+            }
+
+        }
+updateProducto  (solo se le agrega el parametro @id, id)
+deleteProducto	(Se le quita los demas paramtros ya que solo se necesita el id)
+
+Se crea el controlador web api con acciones de Read and write
+ProductoController
+public IEnumerable<Producto> Get()           //Se cambia por el modelo Producto y se importa
+        {
+            GestorProducto gProducto = new GestorProducto();  //Se inicializa el gestorproducto
+            return gProducto.getProducto();				//Se manda a llamar el procedimiento get
+        }
+
+public bool Post([FromBody]Producto producto)			//se envia el modelo
+        {
+            GestorProducto gProducto = new GestorProducto();
+            bool res = gProducto.addProducto(producto);    //Se manda a llamar le procedimiento con el modelo producto
+										//Lo que se le pasa debuelve un true devuelve un true
+            return res;	
+        }
+public bool Put
+public bool Delete
+
+
+Se agrega el codigo para formatear de XML a JSON agregandolo en WebApiConfig
+
+GlobalConfiguration.Configuration.Formatters.JsonFormatter.MediaTypeMappings
+                .Add(new System.Net.Http.Formatting.RequestHeaderMapping("Accept",
+                        "text/html",
+                        StringComparison.InvariantCultureIgnoreCase,
+                        true,
+                        "application/json")
+                );
+
+Se insalla el paquete aspnet.webapi.cors
+en el controller se agrega:
+namespace
+{
+	[EnableCors(origins:"*" ,headers:"*" , methods:"GET, POST, PUT, DELETE, OPTIONS")]   //Importar Http.Cors
+
+en webapiconfig
+	{
+            // Web API configuration and services
+            var cors = new EnableCorsAttribute("*", "*", "*");
+            config.EnableCors(cors);
+
+*******************************************************************************************************
+Crear proyecto angular 
+ng new front_producto  y  CSS
+--------------------------------------------------------------------------------------------------------------
+installar bootstrap    npm install bootstrap
+importar librerias en angular.json
+"styles"
+	"node_modules/bootstrap/dist/css/bootstrap.css",
+
+"scripts"
+      "node_modules/bootstrap/dist/js/bootstrap.js" 
+-----------------------------------------------------------------------------------------------------
+
+app.component.html
+Se agrega el html en la misma pagina
+------------------------------------------------------------------------------------------------------
+se agrega una carpeta models y services en app
+Se crea el modelo: producto.ts
+se crea el servicio: ng g s services/producto
+
+se agrega la clase de lo que se va a extraer de la api
+	export class Producto{
+	id:number = 0; 			//Se agrega el tipo de dato como se van a recibir
+   	nombre:string = "";		
+    	cantidad:number = 0;		//Recordar que no todos los tipos son iguales en Angular
+    	descripcion:string = "";
+	}
+------------------------------------------------------------------------------------------------------------
+en producto.services.ts
+primero se importa HttpCliente:  import {HttpClient} from '@angular/common/http'
+en el constructor se agrega lo que se va a conectar a la API
+	constructor(private http:HttpClient){}
+
+Se hace la coneccion con la api agregandolo a una variable: 
+	  url:string = "http//localhos  api/producto"
+
+Se empieza a realizar el servicio por cada proceso a recibir del api
+	getProducto(){
+    		return this.http.get(this.url);
+  	}
+
+  	addProducto(producto:Producto):Observable<Producto>{
+    		return this.http.post<Producto>(this.url, producto);
+  	}
+
+  	updateProducto(id:number, producto:Producto):Observable<Producto>{
+    		return this.http.put<Producto>(this.url + `/${id}`, producto);
+  	}
+
+  	deleteProducto(id:number){
+    		return this.http.delete(this.url + `/${id}`);
+  	}
+
+
+-----------------------------------------------------------------------------------------------------------
+En app.module.ts se agrega en imports:[
+		HttpClientModule,
+		FormsModule
+	]
+	
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
+Se empieza a realizar la logica en app.components.ts
+Se crea una variable ne base al modelo 
+	producto:Producto = new Producto();
+	datatable:any = [];
+
+Se crea el constructor con su variable tipo los servicios
+constructor(private productoService:ProductoService){
+  }
+
+ngOnInit():vooid{				//Es lo que inicia desde que abre la pagian web
+	this.onDataTable();
+}
+
+onDataTable(){
+	this.productoService.getProducto().subscribe(res=> {
+		this.datatable = res;
+		console.log(res;)
+	});
+}
+
+onSetData(select:any){		//mandamos a traer cualquier tipo de dato
+	this.producto.id = select.idProducto;
+	this.producto.nombre = select.nombre;
+	this.producto.cantidad = select.cantidad;
+	this.producto.descripcion = select.descripcion;
+}
+
+clear(){
+	this.producto.id = 0;
+	this.producto.nombre = "";
+	...
+}
+
+onAddProducto(producto:Producto):void{
+	this.productoService.addProducto(producto).subscribe(res => {			//El subscribe para recibir la respuesta.
+		if(res){
+			alert(`El producto ${producto.nombre} se agrego correctamente`);
+			this.clear();
+			this.onDataTable();
+		}else{
+			alert('Error');
+		}
+	});
+}
+
+onUpdateProducto(producto:Producto):void{
+	this.productoService.updateProducto(producto.id, producto).subscribe(res => {
+		if(res){
+			alert(`El producto ${producto.nombre} se actualizo correctamente`);
+			this.clear();
+			this.onDataTable();
+		}else{
+			alert('Error');
+		}
+	});
+}
+
+onDeleteProducto(id:number):void{
+	this.productoService.deleteProducto(id).subscribe(res => {
+		if(res){
+			alert(`El producto con id: ${id} se elimino correctamente`);
+			this.clear();
+			this.onDataTable();
+		}else{
+			alert('Error');
+		}
+	});
+}	
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+Luego en app.component.html se configura para poder mostrar los datos en la pagina y agregar el metodo onSetData()
+	tr *ngFor = "let item of datatable" 	
+		td input type=button value=seleccionar (click)="onSetData(item)"
+		td {{item.id_mascota}}		//esto es el valor como lo trae en el console.log(res)
+		td {{item.nombre}}
+		...
+	tr
+
+Luego en cada textbox se le agrega un ngModel				 ************************		
+	<input type="text" name="id" id="txtId" class="form-control" [(ngModel)]="producto.id" disabled="true">
+	...										 **************************
+
+Luego en cada boton se agrega cada metodo con la funcion (click)	
+								     ******************************							
+	<button class="btn btn-success" type="button" (click)="onAddProducto(producto)">Agregar</button> 
+								     *******************************
+	*Todo depende tambien que reciba el metodo, en el caso de delete solo recibe el id: producto.id
